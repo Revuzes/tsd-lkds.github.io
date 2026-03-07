@@ -5,97 +5,202 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Приемка машины</title>
 <style>
-body { font-family: Arial; padding: 20px; }
-label { margin-top: 10px; display: block; }
-input, textarea { width: 100%; padding: 10px; margin-top: 5px; }
-button { width: 100%; padding: 15px; margin-top: 15px; }
-table { width: 100%; margin-top:20px; border-collapse: collapse; }
-th, td { border: 1px solid #ccc; padding: 8px; }
+body { font-family: Arial; padding: 15px; background: #f5f5f5; }
+.container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+h2 { text-align: center; margin-bottom: 15px; }
+label { display: block; margin-top: 12px; font-weight: bold; }
+input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; font-size: 1em; border: 1px solid #ccc; border-radius: 5px; }
+button { width: 100%; padding: 15px; margin-top: 15px; background: #2a9d8f; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; }
+button:hover { background: #21867a; }
+hr { margin: 20px 0; border: 1px dashed #ccc; }
+.table-container { max-height: 300px; overflow-y: auto; margin-top: 15px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ccc; padding: 5px; font-size: 0.9em; text-align: left; }
+.subtle { color: #999; }
 </style>
 </head>
 <body>
 
-<h2>Начало приемки</h2>
-<label>ТН машины:</label><input id="tn">
+<div class="container">
+<h2>Приемка машины</h2>
 
-<label>Начальный № паллеты:</label><input id="startNo">
+<!-- Основная информация -->
+<label>ТН машины:</label>
+<input type="text" id="tn">
 
-<label>Номер заказа:</label><input id="order">
+<label>Номер паллеты:</label>
+<input type="text" id="palletNo">
 
-<label>Наименование:</label><input id="name">
+<hr>
 
-<label>Кол-во:</label><input id="qty">
+<h3>Информация о паллете:</h3>
 
-<label>Брак:</label><textarea id="defect"></textarea>
+<label>Номер заказа:</label>
+<input type="text" id="order">
+
+<label>Партия (последние 3 цифры):</label>
+<div style="display:flex; align-items:center;">
+  <span>1000000</span>
+  <input type="text" id="lot" maxlength="3" style="flex:1; margin-left:5px;">
+</div>
+
+<label>Дата партии 1:</label>
+<input type="text" id="date1" maxlength="10" placeholder="__.__.____">
+
+<label>Дата партии 2 (необязательно):</label>
+<input type="text" id="date2" maxlength="10" placeholder="__.__.____">
+
+<label>Наименование товара:</label>
+<input type="text" id="name">
+
+<label>Кол-во по документам:</label>
+<input type="text" id="qtyDoc">
+
+<label>Ед. измерения:</label>
+<input type="text" id="unit">
+
+<label>Кол-во на поддоне:</label>
+<input type="text" id="qtyPallet">
+
+<label>Тип упаковки:</label>
+<select id="packageType" onchange="toggleOther()">
+  <option value="">Выберите</option>
+  <option value="коробка">Коробка</option>
+  <option value="бочка">Бочка</option>
+  <option value="шт.">Шт.</option>
+  <option value="банка">Банка</option>
+  <option value="другое">Другое</option>
+</select>
+<input type="text" id="packageOther" placeholder="Укажите тип" style="display:none; margin-top:5px;">
+
+<label>Место:</label>
+<input type="text" id="location">
+
+<label>Номер паллеты (последние 4 цифры):</label>
+<div style="display:flex; align-items:center;">
+  <span>EUR-00000</span>
+  <input type="text" id="palletCode" maxlength="4" style="flex:1; margin-left:5px;" placeholder="0000">
+</div>
+
+<label>Брак/Примечания:</label>
+<textarea id="defect"></textarea>
 
 <button onclick="addPallet()">Добавить паллет</button>
 <button onclick="finishReception()">Завершить приемку</button>
 
+<div class="table-container">
 <h3>Текущие паллеты</h3>
 <table id="table">
-<tr><th>#</th><th>Заказ</th><th>Наименование</th><th>Кол‑во</th><th>Брак</th></tr>
+<tr>
+<th>№ паллеты</th>
+<th>Заказ</th>
+<th>Партия</th>
+<th>Дата 1</th>
+<th>Дата 2</th>
+<th>Наименование</th>
+<th>Кол-во</th>
+<th>Ед.</th>
+<th>Кол-во на поддоне</th>
+<th>Упаковка</th>
+<th>Место</th>
+<th>Номер паллеты</th>
+<th>Брак</th>
+</tr>
 </table>
+</div>
+
+</div>
 
 <script>
 let pallets = [];
-let autoNo = 0;
+let autoPalletNo = 0;
+
+function toggleOther() {
+  const sel = document.getElementById("packageType");
+  document.getElementById("packageOther").style.display = sel.value === "другое" ? "block" : "none";
+}
 
 function addPallet() {
   const tn = document.getElementById("tn").value.trim();
+  const palletNo = document.getElementById("palletNo").value.trim();
   const order = document.getElementById("order").value.trim();
+  const lot = document.getElementById("lot").value.trim();
+  const date1 = document.getElementById("date1").value.trim();
+  const date2 = document.getElementById("date2").value.trim();
   const name = document.getElementById("name").value.trim();
-  const qty = document.getElementById("qty").value.trim();
+  const qtyDoc = document.getElementById("qtyDoc").value.trim();
+  const unit = document.getElementById("unit").value.trim();
+  const qtyPallet = document.getElementById("qtyPallet").value.trim();
+  const packageType = document.getElementById("packageType").value === "другое" ? 
+                      document.getElementById("packageOther").value : 
+                      document.getElementById("packageType").value;
+  const location = document.getElementById("location").value.trim();
+  const palletCode = document.getElementById("palletCode").value.trim();
   const defect = document.getElementById("defect").value.trim();
 
-  if (!tn  !order  !name || !qty) return;
+  if(!tn  !palletNo  !order  !lot  !name) { alert("Заполните обязательные поля"); return; }
 
-  if (!autoNo) {
-    autoNo = Number(document.getElementById("startNo").value) || 1;
-  }
-
-  pallets.push({ order, name, quantity: qty, defect, palletNo: autoNo });
-  autoNo++;
+  pallets.push({
+    tn, palletNo, order, lot, date1, date2, name, qtyDoc, unit, qtyPallet, packageType, location, palletCode, defect
+  });
 
   updateTable();
 
+  // Очищаем все поля кроме ТН и номера паллеты
   document.getElementById("order").value = "";
+  document.getElementById("lot").value = "";
+  document.getElementById("date1").value = "";
+  document.getElementById("date2").value = "";
   document.getElementById("name").value = "";
-  document.getElementById("qty").value = "";
+  document.getElementById("qtyDoc").value = "";
+  document.getElementById("unit").value = "";
+  document.getElementById("qtyPallet").value = "";
+  document.getElementById("packageType").value = "";
+  document.getElementById("packageOther").value = "";
+  document.getElementById("packageOther").style.display = "none";
+  document.getElementById("location").value = "";
+  document.getElementById("palletCode").value = "";
   document.getElementById("defect").value = "";
 }
 
 function updateTable() {
   const t = document.getElementById("table");
-  t.innerHTML = "<tr><th>#</th><th>Заказ</th><th>Наименование</th><th>Кол‑во</th><th>Брак</th></tr>";
-  pallets.forEach(p => {
+  t.innerHTML = `<tr>
+<th>№ паллеты</th><th>Заказ</th><th>Партия</th><th>Дата 1</th><th>Дата 2</th><th>Наименование</th><th>Кол-во</th><th>Ед.</th><th>Кол-во на поддоне</th><th>Упаковка</th><th>Место</th><th>Номер паллеты</th><th>Брак</th>
+</tr>`;
+  pallets.forEach(p=>{
     const row = t.insertRow();
     row.insertCell(0).innerText = p.palletNo;
     row.insertCell(1).innerText = p.order;
-    row.insertCell(2).innerText = p.name;
-    row.insertCell(3).innerText = p.quantity;
-    row.insertCell(4).innerText = p.defect;
+    row.insertCell(2).innerText = "1000000"+p.lot;
+    row.insertCell(3).innerText = p.date1;
+    row.insertCell(4).innerText = p.date2;
+    row.insertCell(5).innerText = p.name;
+    row.insertCell(6).innerText = p.qtyDoc;
+    row.insertCell(7).innerText = p.unit;
+    row.insertCell(8).innerText = p.qtyPallet;
+    row.insertCell(9).innerText = p.packageType;
+    row.insertCell(10).innerText = p.location;
+    row.insertCell(11).innerText = "EUR-00000"+p.palletCode;
+    row.insertCell(12).innerText = p.defect;
   });
 }
 
 function finishReception() {
-  if(!pallets.length) return;
-  const tn = document.getElementById("tn").value;
-  const payload = { TN: tn, pallets, timestamp: new Date().toISOString() };
+  if(!pallets.length) { alert("Добавьте хотя бы одну паллету"); return; }
+  const tn = document.getElementById("tn").value.trim();
+  const payload = {TN: tn, pallets, timestamp: new Date().toISOString()};
 
-  fetch("URL_AppsScript", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(payload)
-  })
-  .then(res => res.json())
-  .then(() => {
-    pallets = [];
+  fetch("URL_AppsScript", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)})
+  .then(res=>res.json())
+  .then(()=> {
+    alert("Приемка завершена!");
+    pallets=[];
     updateTable();
-    document.getElementById("tn").value = "";
-    document.getElementById("startNo").value = "";
+    document.getElementById("tn").value="";
+    document.getElementById("palletNo").value="";
   });
 }
 </script>
-
 </body>
 </html>

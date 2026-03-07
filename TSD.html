@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+padding:20px;
+background:#f2f2f2;
+}
+
+.box{
+background:white;
+padding:15px;
+margin-bottom:20px;
+border-radius:8px;
+}
+
+input,select,button{
+width:100%;
+padding:10px;
+margin-top:6px;
+font-size:16px;
+}
+
+button{
+background:#2a7cff;
+color:white;
+border:none;
+border-radius:6px;
+}
+
+video{
+width:100%;
+margin-top:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+td,th{
+border:1px solid #ccc;
+padding:6px;
+font-size:14px;
+}
+
+canvas{
+display:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h3>Новая машина</h3>
+
+ТН
+<input id="tn">
+
+Начальный номер паллета
+<input id="startPallet" value="421">
+
+<button onclick="start()">Начать приемку</button>
+
+</div>
+
+<div class="box" id="scanBlock" style="display:none">
+
+<h3 id="machineTitle"></h3>
+
+Следующий паллет
+<b id="palletNumber"></b>
+
+<button onclick="startCamera()">Открыть камеру</button>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+
+<button onclick="scan()">Сканировать акт</button>
+
+<hr>
+
+Номер заказа
+<input id="order">
+
+Партия
+<input id="batch">
+
+Наименование
+<input id="name">
+
+Кол-во по документам
+<input id="qtyDoc">
+
+Ед измерения
+<input id="unit">
+
+Кол-во на поддоне
+<input id="qtyFact">
+
+Упаковка продукции
+<select id="unit2" onchange="checkOther()">
+<option>коробки</option>
+<option>бочки</option>
+<option>шт</option>
+<option>банки</option>
+<option>другое</option>
+</select>
+
+<input id="unitOther" placeholder="указать упаковку" style="display:none">
+
+Место
+<input id="place">
+
+<button onclick="addRow()">Добавить</button>
+
+</div>
+
+<div class="box">
+
+<button onclick="copyExcel()">Копировать для Excel</button>
+
+<table id="table">
+
+<tr>
+<th>Дата</th>
+<th>ТН</th>
+<th>Номер заказа</th>
+<th>Партия</th>
+<th>Наименование</th>
+<th>Кол</th>
+<th>Ед</th>
+<th>Факт</th>
+<th>Упаковка</th>
+<th>Место</th>
+<th>Паллет</th>
+</tr>
+
+</table>
+
+</div>
+
+<script>
+
+let pallet=0
+let tn=""
+let tableData=[]
+let stream
+
+function formatPallet(n){
+return "EUR-"+String(n).padStart(9,"0")
+}
+
+function start(){
+
+tn=document.getElementById("tn").value
+pallet=parseInt(document.getElementById("startPallet").value)
+
+document.getElementById("scanBlock").style.display="block"
+document.getElementById("machineTitle").innerText="Машина ТН "+tn
+
+updatePallet()
+
+}
+
+function updatePallet(){
+document.getElementById("palletNumber").innerText=formatPallet(pallet)
+}
+
+function checkOther(){
+
+if(document.getElementById("unit2").value==="другое"){
+document.getElementById("unitOther").style.display="block"
+}else{
+document.getElementById("unitOther").style.display="none"
+}
+
+}
+
+async function startCamera(){
+
+stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
+
+document.getElementById("video").srcObject=stream
+
+}
+
+async function scan(){
+
+let video=document.getElementById("video")
+let canvas=document.getElementById("canvas")
+
+canvas.width=video.videoWidth
+canvas.height=video.videoHeight
+
+let ctx=canvas.getContext("2d")
+
+ctx.drawImage(video,0,0)
+
+enhance(canvas)
+
+await recognize(canvas)
+
+}
+
+function enhance(canvas){
+
+let ctx=canvas.getContext("2d")
+let img=ctx.getImageData(0,0,canvas.width,canvas.height)
+
+for(let i=0;i<img.data.length;i+=4){
+
+let avg=(img.data[i]+img.data[i+1]+img.data[i+2])/3
+
+avg=avg>150?255:0
+
+img.data[i]=avg
+img.data[i+1]=avg
+img.data[i+2]=avg
+
+}
+
+ctx.putImageData(img,0,0)
+
+}
+
+async function recognize(canvas){
+
+const result=await Tesseract.recognize(canvas,'rus+eng')
+
+let text=result.data.text
+
+parseText(text)
+
+}
+
+function parseText(text){
+
+let lines=text.split("\n")
+
+lines.forEach(l=>{
+
+l=l.trim()
+
+if(/01-\d+/.test(l)){
+document.getElementById("order").value=l
+}
+
+if(/\d{9}/.test(l)){
+document.getElementById("batch").value=l
+}
+
+if(/\d+\s*(шт|кг|л)/i.test(l)){
+
+let parts=l.split(" ")
+
+document.getElementById("qtyDoc").value=parts[0]
+document.getElementById("unit").value=parts[1]
+
+}
+
+if(l.length>12 && !l.includes("01-")){
+document.getElementById("name").value=l
+}
+})
+
+}
+
+function addRow(){
+
+let date=new Date().toLocaleDateString("ru-RU")
+
+let unit2=document.getElementById("unit2").value
+
+if(unit2==="другое"){
+unit2=document.getElementById("unitOther").value
+}
+
+let row={
+
+date:date,
+tn:tn,
+order:document.getElementById("order").value,
+batch:document.getElementById("batch").value,
+name:document.getElementById("name").value,
+qtyDoc:document.getElementById("qtyDoc").value,
+unit:document.getElementById("unit").value,
+qtyFact:document.getElementById("qtyFact").value,
+unit2:unit2,
+place:document.getElementById("place").value,
+pallet:formatPallet(pallet)
+
+}
+
+tableData.push(row)
+
+let tr=document.createElement("tr")
+
+tr.innerHTML=`
+
+<td>${row.date}</td>
+<td>${row.tn}</td>
+<td>${row.order}</td>
+<td>${row.batch}</td>
+<td>${row.name}</td>
+<td>${row.qtyDoc}</td>
+<td>${row.unit}</td>
+<td>${row.qtyFact}</td>
+<td>${row.unit2}</td>
+<td>${row.place}</td>
+<td>${row.pallet}</td>
+
+`
+
+document.getElementById("table").appendChild(tr)
+
+pallet++
+
+updatePallet()
+
+}
+
+function copyExcel(){
+
+let text=""
+
+tableData.forEach(r=>{
+
+text+=`${r.date}\t${r.tn}\t\t\t\t${r.order}\t${r.batch}\t${r.name}\t${r.qtyDoc}\t${r.unit}\t${r.qtyFact}\t${r.unit2}\t${r.place}\t${r.pallet}\n`
+
+})
+
+navigator.clipboard.writeText(text)
+
+alert("Скопировано")
+
+}
+
+</script>
+
+</body>
+</html>

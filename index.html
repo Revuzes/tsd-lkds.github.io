@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>Приёмка паллет</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { font-family: Arial; padding: 20px; }
-input { margin: 5px; padding: 5px; }
-table { border-collapse: collapse; margin-top: 20px; width: 100%; }
-th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
-.pallet-number { font-weight: bold; }
+body { font-family: Arial; padding: 10px; font-size: 18px; }
+input, select { font-size: 18px; padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+button { font-size: 20px; padding: 15px; margin: 10px 0; width: 100%; background-color: #007BFF; color: white; border: none; border-radius: 5px; }
+table { width: 100%; font-size: 16px; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+label { font-weight: bold; }
+span.prefix { font-weight: bold; }
 </style>
 </head>
 <body>
@@ -22,12 +25,14 @@ th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
 
 <div>
 <label>Номер заказа:</label>
-<input type="text" id="orderNumber" placeholder="01-XXXXXX">
+<span class="prefix">01-</span>
+<input type="text" id="orderNumber" placeholder="000000" maxlength="6">
 </div>
 
 <div>
 <label>Партия:</label>
-<input type="text" id="batchNumber" placeholder="1000000XXX">
+<span class="prefix">1000000</span>
+<input type="text" id="batchNumber" placeholder="000" maxlength="3">
 </div>
 
 <div>
@@ -119,7 +124,7 @@ packageType.addEventListener("change", () => {
 otherPackage.style.display = packageType.value === "Другое" ? "inline-block" : "none";
 });
 
-// Функция форматирования даты партии
+// Форматирование даты
 function formatDateInput(input) {
 let v = input.value.replace(/\D/g, '');
 if (v.length >= 2) v = v.slice(0,2)+'.'+v.slice(2);
@@ -133,8 +138,8 @@ document.getElementById("batchDate2").addEventListener("input", e=>formatDateInp
 
 document.getElementById("addPallet").addEventListener("click", () => {
 const tnMachine = document.getElementById("tnMachine").value;
-const orderNumber = document.getElementById("orderNumber").value;
-const batchNumber = document.getElementById("batchNumber").value;
+const fullOrder = "01-" + document.getElementById("orderNumber").value;
+const fullBatch = "1000000" + document.getElementById("batchNumber").value;
 const batchDate1 = document.getElementById("batchDate1").value;
 const batchDate2 = document.getElementById("batchDate2").value;
 const productName = document.getElementById("productName").value;
@@ -146,11 +151,11 @@ const place = document.getElementById("place").value;
 const palletNumber = "EUR-00000" + document.getElementById("palletNumber").value;
 const defect = document.getElementById("defect").value;
 
-const batchCell = batchNumber + "\n" +
+const batchCell = fullBatch + "\n" +
 (batchDate1 ? "(" + batchDate1 + (batchDate2 ? ", " + batchDate2 : "") + ")" : "");
 
 const row = document.createElement("tr");
-[orderNumber, batchCell, productName, docQty, unit, palletQty, type, place, palletNumber, defect]
+[fullOrder, batchCell, productName, docQty, unit, palletQty, type, place, palletNumber, defect]
 .forEach(text => {
 const td = document.createElement("td");
 td.innerText = text;
@@ -186,7 +191,7 @@ alert("Нет данных для отправки!");
 return;
 }
 
-fetch("https://script.google.com/macros/s/AKfycbynWyiUysvvsPm1Lg9JVnbgCf5DkwZaniH3vmbEMA83djnIlhm5DIXsa13bjw3tLQW0Sw/exec", { // сюда вставим URL Apps Script
+fetch("https://script.google.com/macros/s/AKfycbynWyiUysvvsPm1Lg9JVnbgCf5DkwZaniH3vmbEMA83djnIlhm5DIXsa13bjw3tLQW0Sw/exec", { // Заменить на URL Apps Script
 method: "POST",
 body: JSON.stringify({rows}),
 headers: {"Content-Type":"application/json"}
@@ -195,7 +200,7 @@ headers: {"Content-Type":"application/json"}
 .then(data => {
 if (data.status === "ok") {
 alert("Данные успешно отправлены");
-// очистка всего
+// очистка всех полей
 document.getElementById("tnMachine").value = "";
 document.getElementById("palletNumber").value = "0000";
 palletTableBody.innerHTML = "";

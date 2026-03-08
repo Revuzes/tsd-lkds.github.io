@@ -2,206 +2,208 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Приемка машины</title>
+<title>Приёмка паллет</title>
 <style>
-body { font-family: Arial; padding: 15px; background: #f5f5f5; }
-.container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
-h2 { text-align: center; margin-bottom: 15px; }
-label { display: block; margin-top: 12px; font-weight: bold; }
-input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; font-size: 1em; border: 1px solid #ccc; border-radius: 5px; }
-button { width: 100%; padding: 15px; margin-top: 15px; background: #2a9d8f; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; }
-button:hover { background: #21867a; }
-hr { margin: 20px 0; border: 1px dashed #ccc; }
-.table-container { max-height: 300px; overflow-y: auto; margin-top: 15px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid #ccc; padding: 5px; font-size: 0.9em; text-align: left; }
-.subtle { color: #999; }
-.flex-row { display: flex; align-items: center; }
-.flex-row span { margin-right: 5px; }
+body { font-family: Arial; padding: 20px; }
+input { margin: 5px; padding: 5px; }
+table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+.pallet-number { font-weight: bold; }
 </style>
 </head>
 <body>
 
-<div class="container">
-<h2>Приемка машины</h2>
+<h2>Приёмка паллет</h2>
 
-<!-- Основная информация -->
+<div>
 <label>ТН машины:</label>
-<input type="text" id="tn">
-
-<label>Номер паллета:</label>
-<input type="text" id="palletNo">
-
-<hr>
-
-<h3>Информация о паллете:</h3>
-
-<label>Номер заказа:</label>
-<input type="text" id="order">
-
-<label>Партия (последние 3 цифры):</label>
-<div class="flex-row">
-<span>1000000</span>
-<input type="text" id="lot" maxlength="3" placeholder="000">
+<input type="text" id="tnMachine" placeholder="Введите ТН">
 </div>
 
+<div>
+<label>Номер заказа:</label>
+<input type="text" id="orderNumber" placeholder="01-XXXXXX">
+</div>
+
+<div>
+<label>Партия:</label>
+<input type="text" id="batchNumber" placeholder="1000000XXX">
+</div>
+
+<div>
 <label>Дата партии 1:</label>
-<input type="text" id="date1" maxlength="10" placeholder="__.__.____">
+<input type="text" id="batchDate1" placeholder="__.__.____">
+</div>
 
+<div>
 <label>Дата партии 2 (необязательно):</label>
-<input type="text" id="date2" maxlength="10" placeholder="__.__.____">
+<input type="text" id="batchDate2" placeholder="__.__.____">
+</div>
 
+<div>
 <label>Наименование товара:</label>
-<input type="text" id="name">
+<input type="text" id="productName">
+</div>
 
-<label>Кол-во по документам:</label>
-<input type="text" id="qtyDoc">
+<div>
+<label>Кол-во по документам/Вес:</label>
+<input type="text" id="docQty">
+</div>
 
+<div>
 <label>Ед. измерения:</label>
 <input type="text" id="unit">
+</div>
 
+<div>
 <label>Кол-во на поддоне:</label>
-<input type="text" id="qtyPallet">
+<input type="text" id="palletQty">
+</div>
 
+<div>
 <label>Тип упаковки:</label>
-<select id="packageType" onchange="toggleOther()">
-<option value="">Выберите</option>
-<option value="коробка">Коробка</option>
-<option value="бочка">Бочка</option>
-<option value="шт.">Шт.</option>
-<option value="банка">Банка</option>
-<option value="другое">Другое</option>
+<select id="packageType">
+<option value="Коробки">Коробки</option>
+<option value="Бочки">Бочки</option>
+<option value="Шт.">Шт.</option>
+<option value="Банки">Банки</option>
+<option value="Другое">Другое</option>
 </select>
-<input type="text" id="packageOther" placeholder="Укажите тип" style="display:none; margin-top:5px;">
+<input type="text" id="otherPackage" placeholder="Указать тип" style="display:none;">
+</div>
 
+<div>
 <label>Место:</label>
-<input type="text" id="location">
-
-<label>Номер паллета (последние 4 цифры):</label>
-<div class="flex-row">
-<span>EUR-00000</span>
-<input type="text" id="palletCode" maxlength="4" placeholder="0000">
+<input type="text" id="place">
 </div>
 
-<label>Брак/Примечания:</label>
-<textarea id="defect"></textarea>
+<div>
+<label>Номер паллета: EUR-00000</label>
+<input type="text" id="palletNumber" placeholder="0000" maxlength="4">
+</div>
 
-<button onclick="addPallet()">Завершить паллет</button>
-<button onclick="finishReception()">Завершить приемку</button>
+<div>
+<label>Наличие брака:</label>
+<input type="text" id="defect">
+</div>
 
-<div class="table-container">
+<button id="addPallet">Завершить паллет</button>
+
 <h3>Текущие паллеты</h3>
-<table id="table">
+<table id="palletTable">
+<thead>
 <tr>
-<th>№ паллета</th><th>Заказ</th><th>Партия</th><th>Дата 1</th><th>Дата 2</th><th>Наименование</th><th>Кол-во</th><th>Ед.</th><th>Кол-во на поддоне</th><th>Упаковка</th><th>Место</th><th>Номер паллета</th><th>Брак</th>
+<th>Номер заказа</th>
+<th>Партия + даты</th>
+<th>Наименование товара</th>
+<th>Кол-во по документам/Вес</th>
+<th>Ед. измерения</th>
+<th>Кол-во на поддоне</th>
+<th>Тип упаковки</th>
+<th>Место</th>
+<th>Номер паллета</th>
+<th>Наличие брака</th>
 </tr>
+</thead>
+<tbody></tbody>
 </table>
-</div>
-</div>
+
+<button id="finishReception">Завершить приёмку</button>
 
 <script>
-let pallets = [];
-let autoPalletNo = 0;
+const palletTableBody = document.querySelector("#palletTable tbody");
+const packageType = document.getElementById("packageType");
+const otherPackage = document.getElementById("otherPackage");
 
-function toggleOther() {
-const sel = document.getElementById("packageType");
-document.getElementById("packageOther").style.display = sel.value === "другое" ? "block" : "none";
-}
-
-// Авто-переход для даты
-function autoDateInput(id) {
-const el = document.getElementById(id);
-el.addEventListener("input", function(e){
-let v = e.target.value.replace(/\D/g,'');
-if(v.length>2 && v.length<=4) v = v.slice(0,2)+'.'+v.slice(2);
-if(v.length>4 && v.length<=8) v = v.slice(0,5)+'.'+v.slice(5);
-if(v.length>8) v = v.slice(0,10);
-e.target.value = v;
-});
-}
-autoDateInput("date1");
-autoDateInput("date2");
-
-function addPallet() {
-const tn = document.getElementById("tn").value.trim();
-const palletNo = document.getElementById("palletNo").value.trim();
-const order = document.getElementById("order").value.trim();
-const lot = document.getElementById("lot").value.trim();
-const date1 = document.getElementById("date1").value.trim();
-const date2 = document.getElementById("date2").value.trim();
-const name = document.getElementById("name").value.trim();
-const qtyDoc = document.getElementById("qtyDoc").value.trim();
-const unit = document.getElementById("unit").value.trim();
-const qtyPallet = document.getElementById("qtyPallet").value.trim();
-const packageType = document.getElementById("packageType").value === "другое" ? document.getElementById("packageOther").value : document.getElementById("packageType").value;
-const location = document.getElementById("location").value.trim();
-const palletCode = document.getElementById("palletCode").value.trim();
-const defect = document.getElementById("defect").value.trim();
-
-if(!tn || !palletNo || !order || !lot || !name) { alert("Заполните обязательные поля"); return; }
-
-pallets.push({
-tn, palletNo, order, lot, date1, date2, name, qtyDoc, unit, qtyPallet, packageType, location, palletCode, defect
+packageType.addEventListener("change", () => {
+otherPackage.style.display = packageType.value === "Другое" ? "inline-block" : "none";
 });
 
-updateTable();
+// Функция форматирования даты партии
+function formatDateInput(input) {
+let v = input.value.replace(/\D/g, '');
+if (v.length >= 2) v = v.slice(0,2)+'.'+v.slice(2);
+if (v.length >= 5) v = v.slice(0,5)+'.'+v.slice(5);
+if (v.length > 10) v = v.slice(0,10);
+input.value = v;
+}
 
-// Очищаем поля кроме ТН и номера паллета
-document.getElementById("order").value = "";
-document.getElementById("lot").value = "";
-document.getElementById("date1").value = "";
-document.getElementById("date2").value = "";
-document.getElementById("name").value = "";
-document.getElementById("qtyDoc").value = "";
+document.getElementById("batchDate1").addEventListener("input", e=>formatDateInput(e.target));
+document.getElementById("batchDate2").addEventListener("input", e=>formatDateInput(e.target));
+
+document.getElementById("addPallet").addEventListener("click", () => {
+const tnMachine = document.getElementById("tnMachine").value;
+const orderNumber = document.getElementById("orderNumber").value;
+const batchNumber = document.getElementById("batchNumber").value;
+const batchDate1 = document.getElementById("batchDate1").value;
+const batchDate2 = document.getElementById("batchDate2").value;
+const productName = document.getElementById("productName").value;
+const docQty = document.getElementById("docQty").value;
+const unit = document.getElementById("unit").value;
+const palletQty = document.getElementById("palletQty").value;
+const type = packageType.value === "Другое" ? otherPackage.value : packageType.value;
+const place = document.getElementById("place").value;
+const palletNumber = "EUR-00000" + document.getElementById("palletNumber").value;
+const defect = document.getElementById("defect").value;
+
+const batchCell = batchNumber + "\n" +
+(batchDate1 ? "(" + batchDate1 + (batchDate2 ? ", " + batchDate2 : "") + ")" : "");
+
+const row = document.createElement("tr");
+[orderNumber, batchCell, productName, docQty, unit, palletQty, type, place, palletNumber, defect]
+.forEach(text => {
+const td = document.createElement("td");
+td.innerText = text;
+row.appendChild(td);
+});
+
+palletTableBody.appendChild(row);
+
+// Очистка полей кроме ТН машины и номер паллеты (увеличение на 1)
+document.getElementById("orderNumber").value = "";
+document.getElementById("batchNumber").value = "";
+document.getElementById("batchDate1").value = "";
+document.getElementById("batchDate2").value = "";
+document.getElementById("productName").value = "";
+document.getElementById("docQty").value = "";
 document.getElementById("unit").value = "";
-document.getElementById("qtyPallet").value = "";
-document.getElementById("packageType").value = "";
-document.getElementById("packageOther").value = "";
-document.getElementById("packageOther").style.display = "none";
-document.getElementById("location").value = "";
-document.getElementById("palletCode").value = "";
+document.getElementById("palletQty").value = "";
+document.getElementById("packageType").value = "Коробки";
+otherPackage.style.display = "none";
+otherPackage.value = "";
+document.getElementById("place").value = "";
+document.getElementById("palletNumber").value = (parseInt(document.getElementById("palletNumber").value) + 1).toString().padStart(4, "0");
 document.getElementById("defect").value = "";
-}
-
-function updateTable() {
-const t = document.getElementById("table");
-t.innerHTML = `<tr>
-<th>№ паллета</th><th>Заказ</th><th>Партия</th><th>Дата 1</th><th>Дата 2</th><th>Наименование</th><th>Кол-во</th><th>Ед.</th><th>Кол-во на поддоне</th><th>Упаковка</th><th>Место</th><th>Номер паллета</th><th>Брак</th>
-</tr>`;
-pallets.forEach(p=>{
-const row = t.insertRow();
-row.insertCell(0).innerText = p.palletNo;
-row.insertCell(1).innerText = p.order;
-row.insertCell(2).innerText = "1000000"+p.lot;
-row.insertCell(3).innerText = p.date1;
-row.insertCell(4).innerText = p.date2;
-row.insertCell(5).innerText = p.name;
-row.insertCell(6).innerText = p.qtyDoc;
-row.insertCell(7).innerText = p.unit;
-row.insertCell(8).innerText = p.qtyPallet;
-row.insertCell(9).innerText = p.packageType;
-row.insertCell(10).innerText = p.location;
-row.insertCell(11).innerText = "EUR-00000"+p.palletCode;
-row.insertCell(12).innerText = p.defect;
 });
+
+document.getElementById("finishReception").addEventListener("click", () => {
+const rows = Array.from(palletTableBody.querySelectorAll("tr")).map(tr =>
+Array.from(tr.children).map(td => td.innerText)
+);
+
+if (rows.length === 0) {
+alert("Нет данных для отправки!");
+return;
 }
 
-function finishReception() {
-if(!pallets.length) { alert("Добавьте хотя бы одну паллету"); return; }
-const tn = document.getElementById("tn").value.trim();
-const payload = {TN: tn, pallets, timestamp: new Date().toISOString()};
-
-fetch("URL_AppsScript", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)})
-.then(res=>res.json())
-.then(()=> {
-alert("Приемка завершена!");
-pallets=[];
-updateTable();
-document.getElementById("tn").value="";
-document.getElementById("palletNo").value="";
+fetch("https://script.google.com/macros/s/AKfycbynWyiUysvvsPm1Lg9JVnbgCf5DkwZaniH3vmbEMA83djnIlhm5DIXsa13bjw3tLQW0Sw/exec", { // сюда вставим URL Apps Script
+method: "POST",
+body: JSON.stringify({rows}),
+headers: {"Content-Type":"application/json"}
+})
+.then(res => res.json())
+.then(data => {
+if (data.status === "ok") {
+alert("Данные успешно отправлены");
+// очистка всего
+document.getElementById("tnMachine").value = "";
+document.getElementById("palletNumber").value = "0000";
+palletTableBody.innerHTML = "";
+} else {
+alert("Ошибка отправки");
+}
 });
-}
+});
 </script>
 
 </body>

@@ -191,7 +191,7 @@ alert("Нет данных для отправки!");
 return;
 }
 
-fetch("https://script.google.com/macros/s/AKfycbynWyiUysvvsPm1Lg9JVnbgCf5DkwZaniH3vmbEMA83djnIlhm5DIXsa13bjw3tLQW0Sw/exec", { // Заменить на URL Apps Script
+fetch("https://script.google.com/macros/s/AKfycbyTShpw7UQN6C-Sefk8hA8G_HOcb6zPxi5QDDKPHztQyXCnsrFSJd2D_SNdOeZJv4P5Ug/exec", { // Заменить на URL Apps Script
 method: "POST",
 body: JSON.stringify({rows}),
 headers: {"Content-Type":"application/json"}
@@ -213,3 +213,4 @@ alert("Ошибка отправки");
 
 </body>
 </html>
+

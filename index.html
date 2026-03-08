@@ -186,7 +186,7 @@ document.getElementById("finishReception").addEventListener("click", () => {
     Array.from(tr.children).map(td => td.innerText)
   );
 
-  fetch("WEB_APP_URL", { 
+  fetch("https://script.google.com/macros/s/AKfycbzpWOr3erGaA8qym7BeKMGwhJs1lx88TKbJDTJj3v3tuoBW6TqmZKdtCD91npEwNZtPlA/exec", { 
     method: "POST",
     body: JSON.stringify({rows}),
     headers: {"Content-Type":"application/json"}
@@ -206,5 +206,6 @@ document.getElementById("finishReception").addEventListener("click", () => {
 
 </body>
 </html>
+
 
 
